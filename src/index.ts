@@ -9,6 +9,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3000;
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', './src/views');
 
@@ -39,6 +40,17 @@ app.post('/webhook', async (req, res) => {
   } catch (err: any) {
     console.error(' Error handling webhook:', err.message);
     res.status(500).send(`Webhook error: ${err.message}`);
+  }
+});
+
+app.post('/delete/:id', async (req, res) => {
+  try {
+    await LabelEvent.findByIdAndDelete(req.params.id);
+    console.log(`Deleted event with id: ${req.params.id}`);
+    res.redirect('/');
+  } catch (error) {
+    console.error('Failed to delete event:', error);
+    res.status(500).send('Error deleting event');
   }
 });
 

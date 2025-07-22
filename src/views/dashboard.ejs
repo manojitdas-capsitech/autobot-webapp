@@ -17,7 +17,6 @@
       background-color: #fff;
       width: 80%;
       padding: 2rem;
-      border: 1px solid #ccc;
     }
     label {
       margin-right: 2rem;
@@ -48,7 +47,6 @@
     }
     th, td {
       font-size: 3rem;  
-      border: 1px solid #ddd;
       padding: 8px;
       text-align: left;
     }
@@ -57,13 +55,12 @@
       font-size: 3rem;  
     }
     tr:nth-child(even) {
-      background-color: #f9f9f9;
       font-size: 3rem;  
     }
     .footer {
       margin-top: 2rem;
       font-size: 3rem;
-      color: #777;
+      color: #6d6d6d;
     }
     p {
       font-size: 3rem;
@@ -82,6 +79,11 @@
         <option value="frontend" <%= label === 'frontend' ? 'selected' : '' %>>frontend</option>
         <option value="backend" <%= label === 'backend' ? 'selected' : '' %>>backend</option>
         <option value="docs" <%= label === 'docs' ? 'selected' : '' %>>docs</option>
+        <option value="devops" <%= label === 'devops' ? 'selected' : '' %>>devops</option>
+        <option value="test" <%= label === 'test' ? 'selected' : '' %>>test</option>
+        <option value="performance" <%= label === 'performance' ? 'selected' : '' %>>performance</option>
+        <option value="security" <%= label === 'security' ? 'selected' : '' %>>security</option>
+        <option value="refactor" <%= label === 'refactor' ? 'selected' : '' %>>refactor</option>
       </select>
     </label>
 
@@ -104,19 +106,25 @@
         <th>Labels</th>
         <th>Repo</th>
         <th>Time</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
-      <% events.forEach(e => { %>
-        <tr>
-          <td><%= e.type %></td>
-          <td>#<%= e.number %></td>
-          <td><%= e.labels.join(', ') %></td>
-          <td><%= e.repo %></td>
-          <td><%= new Date(e.time).toLocaleString() %></td>
-        </tr>
-      <% }) %>
-    </tbody>
+    <% events.forEach(e => { %>
+      <tr>
+        <td><%= e.type %></td>
+        <td>#<%= e.number %></td>
+        <td><%= e.labels.join(', ') %></td>
+        <td><%= e.repo %></td>
+        <td><%= new Date(e.time).toLocaleString() %></td>
+        <td>
+          <form action="/delete/<%= e._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
+            <button style="background-color: #dc3545;">Delete</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </tbody>
   </table>
 
   <div class="footer">
