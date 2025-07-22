@@ -76,8 +76,8 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/ananyadua27/github-labeler-bot.git
-cd github-labeler-bot
+git clone https://github.com/ananyadua27/GitHub-issue-labeler-bot.git
+cd GitHub-issue-labeler-bot
 ```
 
 ### 2. Install dependencies
