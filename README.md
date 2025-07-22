@@ -55,7 +55,9 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
                                                       +---------------------------+
                                                       |     Dashboard (EJS)       |
                                                       +---------------------------+
-## 🛠️ Tech Stack
+                                                      
+```
+## Tech Stack
 
 | Layer         | Tech Stack                                      |
 |---------------|--------------------------------------------------|
@@ -76,25 +78,31 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
 ```bash
 git clone https://github.com/ananyadua27/github-issue-labeler-bot.git
 cd github-issue-labeler-bot
+```
 
 ### 2. Install dependencies
 ```bash
 npm install
+```
 
 ### 3. Configure environment
 Create a .env file in the root:
+
 ```bash
 GITHUB_TOKEN=
 MONGO_DB_URL=
 PORT=3000
+```
 
 ### 4. Start ngrok (if running locally)
 ```bash
 npx ngrok http 3000
+```
 
 ### 5. Start the server
 ```bash
 npm run dev
+```
 
 ## GitHub Webhook Setup
 
@@ -154,7 +162,7 @@ Defined in `labeler.ts` using keyword triggers:
 
 ---
 
-### 🤖 ML-Based Classification (Optional)
+### ML-Based Classification (Optional)
 
 Optional microservice powered by **DistilBERT** via Hugging Face Transformers:
 
@@ -175,7 +183,7 @@ Optional microservice powered by **DistilBERT** via Hugging Face Transformers:
 
 ## Security
 
-- GitHub webhook signature verification (HMAC-SHA256) — *in roadmap*
+- GitHub webhook signature verification (HMAC-SHA256) 
 - Environment variables stored securely (`.env`, GitHub secrets)
 - Rate-limiting middleware (planned for production deployment)
 
