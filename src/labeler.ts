@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { applyLabels } from './github';
 import { LabelEvent } from './models/LabelEvent'; 
 
@@ -54,6 +55,19 @@ function getLabelsFromText(text: string): string[] {
   }
   return [...matched];
 }
+async function getMLLabels(text: string): Promise<string[]> {
+  try {
+    const res = await axios.post('http://localhost:5000/predict', { text });
+    return res.data;
+  } catch (err) {
+    if (err instanceof Error) {
+      console.error("ML Labeling Error:", err.message);
+    } else {
+      console.error("ML Labeling Error:", err);
+    }
+    return [];
+  }
+}
 
 export async function handleEvent(payload: any) {
   const isIssue = payload.issue;
@@ -76,7 +90,7 @@ export async function handleEvent(payload: any) {
   const fullText = `${title} ${body || ''}`;
   console.log('Full text:', fullText);
 
-  const labels = getLabelsFromText(fullText);
+  const labels = await getMLLabels(fullText);
   if (labels.length === 0) {
     console.log('No matching labels found.');
     return;
