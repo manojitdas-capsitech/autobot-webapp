@@ -186,5 +186,5 @@ Caching layer + rate-limiting for ML microservice
 
 ## License
 
-MIT License — free to use, extend, and contribute.
+MIT License © Ananya Dua
 
