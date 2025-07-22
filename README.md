@@ -119,7 +119,6 @@ Once configured, the bot will listen for:
 ### Demo:
 
 ![Demo](./assets/diagram1.png)
-![Demo](./assets/diagram2.png)
 ---
 
 ## Smart Labeling Engine
