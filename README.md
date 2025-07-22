@@ -1,14 +1,14 @@
 # GitHub Auto-Issue Labeler Bot + Dashboard
 
-A GitHub bot that automatically labels **Issues** and **Pull Requests** using a rule-based engine and optionally, ML-powered classification. Includes a web dashboard to visualize and filter all contributor activity.
+A GitHub bot that automatically labels **Issues** and **Pull Requests** using a rule-based engine and ML-powered classification. Includes a web dashboard to visualize and filter all contributor activity.
 
-> Built with TypeScript, Express, MongoDB, and EJS — ready for CI/CD, Docker, and extensibility with NLP models like DistilBERT.
+> Built with TypeScript, Express, MongoDB, and EJS. Supports Dockerized deployments, GitHub Actions for CI/CD, and plug-and-play ML classifiers like BART, DistilBERT, or any HuggingFace-supported model.
 
 ---
 
 ## Motivation
 
-Open-source projects often lack consistent labeling for Issues and PRs, leading to confusion and slower triage. This project solves that by providing a pluggable, extensible bot that ensures consistent labels using rule-based triggers or an optional ML classifier: all of which is visualized in a dashboard.
+Maintainers waste valuable time triaging unlabeled issues. This project solves that with automated, intelligent labeling, ensuring faster prioritization, contributor clarity, and repo hygiene. It’s fully modular and extendable for any team or workflow.
 
 ---
 
@@ -20,22 +20,14 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
 ---
 ## Features
 
-- Auto-labels GitHub Issues & PRs based on title/body
-- Supports rule-based and (optional) ML-based classification
-- Real-time webhook listener (`issues`, `pull_request`)
-- MongoDB-backed persistence of events
-- Filterable dashboard UI (label, repo)
-- Designed for Vercel (frontend) + Railway (backend)
-
----
-
-## Design Decisions
-
-- **Hybrid Labeling Engine**: Chose rule-based classification as a fast, transparent default. ML integration is optional and modular.
-- **Webhook-Driven**: Listens to GitHub webhooks to avoid polling and ensure near-instant response.
-- **Dashboard Simplicity**: Server-rendered with EJS to reduce frontend complexity and dependency overhead.
-- **Deployment Flexibility**: Compatible with Railway (backend) and Vercel (dashboard).
-
+- Auto-label GitHub Issues & PRs via rule-based NLP or ML inference
+- Real-time GitHub webhook listener for issues and pull_request
+- Dashboard with filters (label/repo), live-refresh, and latest-first sort
+- ML service powered by HuggingFace Transformers (zero-shot)
+- MongoDB persistence for activity logs (LabelEvents)
+- Extensible keyword-label rules per org/project
+- Docker Compose-based local development and deployment
+- Webhook signature verification and .env config support
 ---
 
 ## Architecture
@@ -65,8 +57,9 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
 | **Database**  | MongoDB Atlas (via Mongoose)                    |
 | **Frontend**  | EJS, HTML, Vanilla CSS                          |
 | **Webhook**   | GitHub Webhooks (`issues`, `pull_request`)      |
-| **Optional ML**| Python, Huggingface Transformers (DistilBERT) |
+| **ML**| Python, Huggingface Transformers (DistilBERT)           |
 | **Dev Tools** | ts-node-dev, dotenv, ngrok                      |
+| **Dev Ops** | Docker, Docker Compose, GitHub Actions (CI/CD)    |
 | **Future**    | Docker, GitHub Actions CI/CD                    |
 
 ---
@@ -80,13 +73,8 @@ git clone https://github.com/ananyadua27/GitHub-issue-labeler-bot.git
 cd GitHub-issue-labeler-bot
 ```
 
-### 2. Install dependencies
-```bash
-npm install
-```
-
-### 3. Configure environment
-Create a .env file in the root:
+### 2. Configure environment
+Create a .env.docker file in the root:
 
 ```bash
 GITHUB_TOKEN=
@@ -94,14 +82,9 @@ MONGO_DB_URL=
 PORT=3000
 ```
 
-### 4. Start ngrok (if running locally)
+### 3. Run with Docker Compose
 ```bash
-npx ngrok http 3000
-```
-
-### 5. Start the server
-```bash
-npm run dev
+docker compose --env-file .env.docker up --build
 ```
 
 ## GitHub Webhook Setup
@@ -165,9 +148,9 @@ Defined in `labeler.ts` using keyword triggers:
 
 Optional service powered by **DistilBERT** via Hugging Face Transformers:
 
-- Uses learning on Issue/PR title + body
-- Connect via internal API for async predictions
-- Planned: fine-tuned classifier on open-source GitHub issue datasets
+- Zero-shot classifier powered by facebook/bart-large-mnli
+- Accepts title + body of Issues/PRs as input
+- Deployed via Flask and called internally at /predict
 
 ---
 
@@ -176,7 +159,7 @@ Optional service powered by **DistilBERT** via Hugging Face Transformers:
 - Non-blocking, async webhook handlers via Express
 - Efficient MongoDB querying with indexed fields
 - ML inference runs asynchronously to avoid blocking webhook thread
-- Can scale horizontally — stateless webhook architecture
+- Horizontally scalable via stateless architecture
 
 ---
 
@@ -193,10 +176,15 @@ Optional service powered by **DistilBERT** via Hugging Face Transformers:
 | Method | Route           | Description                     |
 |--------|------------------|---------------------------------|
 | `POST` | `/webhook`       | Webhook listener for GitHub     |
+| `POST` | `/predict`       | ML service endpoint for label prediction |
 | `GET`  | `/dashboard`     | Rendered UI with filters        |
 | `GET`  | `/api/activity`  | JSON feed of recent activity    |
 
 ---
+
+## Future Improvements 
+
+Caching layer + rate-limiting for ML microservice
 
 ## License
 
