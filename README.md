@@ -8,7 +8,7 @@ A GitHub bot that automatically labels **Issues** and **Pull Requests** using a 
 
 ## Motivation
 
-Open-source projects often lack consistent labeling for Issues and PRs, leading to confusion and slower triage. This project solves that by providing a pluggable, extensible bot that ensures consistent labels using rule-based triggers or an optional ML classifier — all visualized in a dashboard.
+Open-source projects often lack consistent labeling for Issues and PRs, leading to confusion and slower triage. This project solves that by providing a pluggable, extensible bot that ensures consistent labels using rule-based triggers or an optional ML classifier: all of which is visualized in a dashboard.
 
 ---
 
@@ -76,8 +76,8 @@ Open-source projects often lack consistent labeling for Issues and PRs, leading 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/ananyadua27/github-issue-labeler-bot.git
-cd github-issue-labeler-bot
+git clone https://github.com/ananyadua27/github-labeler-bot.git
+cd github-labeler-bot
 ```
 
 ### 2. Install dependencies
@@ -112,9 +112,8 @@ npm run dev
 4. Fill out the webhook form:
    - **Payload URL**: `https://<your-ngrok-or-deployed-url>/webhook`
    - **Content type**: `application/json`
-   - **Secret**: _(optional, not required for MVP)_
    - **Events**: Choose:
-     - Just the individual events →  _Issues_ and _Pull Requests_
+     - Individual events →  _Issues_ and _Pull Requests_
 5. Click **Add webhook**
 
 Once configured, the bot will listen for:
@@ -164,9 +163,9 @@ Defined in `labeler.ts` using keyword triggers:
 
 ### ML-Based Classification (Optional)
 
-Optional microservice powered by **DistilBERT** via Hugging Face Transformers:
+Optional service powered by **DistilBERT** via Hugging Face Transformers:
 
-- Uses zero/few-shot learning on Issue/PR title + body
+- Uses learning on Issue/PR title + body
 - Connect via internal API for async predictions
 - Planned: fine-tuned classifier on open-source GitHub issue datasets
 
