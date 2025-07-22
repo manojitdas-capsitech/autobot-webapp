@@ -60,7 +60,6 @@ Maintainers waste valuable time triaging unlabeled issues. This project solves t
 | **ML**| Python, Huggingface Transformers (BART (facebook/bart-large-mnli)           |
 | **Dev Tools** | ts-node-dev, dotenv, ngrok                      |
 | **Dev Ops** | Docker, Docker Compose, GitHub Actions (CI/CD)    |
-| **Future**    | Docker, GitHub Actions CI/CD                    |
 
 ---
 
