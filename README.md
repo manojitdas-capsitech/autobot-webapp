@@ -57,7 +57,7 @@ Maintainers waste valuable time triaging unlabeled issues. This project solves t
 | **Database**  | MongoDB Atlas (via Mongoose)                    |
 | **Frontend**  | EJS, HTML, Vanilla CSS                          |
 | **Webhook**   | GitHub Webhooks (`issues`, `pull_request`)      |
-| **ML**| Python, Huggingface Transformers (DistilBERT)           |
+| **ML**| Python, Huggingface Transformers (BART (facebook/bart-large-mnli)           |
 | **Dev Tools** | ts-node-dev, dotenv, ngrok                      |
 | **Dev Ops** | Docker, Docker Compose, GitHub Actions (CI/CD)    |
 | **Future**    | Docker, GitHub Actions CI/CD                    |
@@ -144,9 +144,9 @@ Defined in `labeler.ts` using keyword triggers:
 
 ---
 
-### ML-Based Classification (Optional)
+### ML-Based Classification 
 
-Optional service powered by **DistilBERT** via Hugging Face Transformers:
+Service powered by **BART (facebook/bart-large-mnli)** via Hugging Face Transformers:
 
 - Zero-shot classifier powered by facebook/bart-large-mnli
 - Accepts title + body of Issues/PRs as input
