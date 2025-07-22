@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GitHub Auto-Issue Labeler (Bot) Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 4rem;
+      background-color: #fafafa;
+    }
+    h1 {
+      font-size: 5rem;
+      margin-bottom: 2rem;
+    }
+    form {
+      margin-bottom: 2rem;
+      background-color: #fff;
+      width: 80%;
+      padding: 2rem;
+      border: 1px solid #ccc;
+    }
+    label {
+      margin-right: 2rem;
+      font-size: 3rem;  
+    }
+    input[type="text"], select {
+      padding: 6px;
+      font-size: 3rem;
+      margin-right: 2rem;
+    }
+    button {
+      padding: 10px 22px;
+      font-size: 2.5rem;
+      border-radius: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    table {
+      width: 81.5%;
+      font-size: 3rem;  
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      font-size: 3rem;  
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f3f3f3;
+      font-size: 3rem;  
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+      font-size: 3rem;  
+    }
+    .footer {
+      margin-top: 2rem;
+      font-size: 3rem;
+      color: #777;
+    }
+    p {
+      font-size: 3rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>GitHub Auto-Issue Labeler (Bot) Dashboard</h1>
+
+  <form method="get" id="filter-form">
+    <label>
+      Label:
+      <select name="label" id="label-select">
+        <option value="" <%= !label ? 'selected' : '' %>>All</option>
+        <option value="bug" <%= label === 'bug' ? 'selected' : '' %>>bug</option>
+        <option value="frontend" <%= label === 'frontend' ? 'selected' : '' %>>frontend</option>
+        <option value="backend" <%= label === 'backend' ? 'selected' : '' %>>backend</option>
+        <option value="docs" <%= label === 'docs' ? 'selected' : '' %>>docs</option>
+      </select>
+    </label>
+
+    <label>
+      Repo:
+      <input type="text" name="repo" id="repo-input" placeholder="e.g. my-repo"
+        value="<%= typeof repo !== 'undefined' ? repo : '' %>">
+    </label>
+
+    <button type="submit">Apply</button>
+  </form>
+
+  <p><strong>Total Events:</strong> <%= events.length %></p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>#</th>
+        <th>Labels</th>
+        <th>Repo</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% events.forEach(e => { %>
+        <tr>
+          <td><%= e.type %></td>
+          <td>#<%= e.number %></td>
+          <td><%= e.labels.join(', ') %></td>
+          <td><%= e.repo %></td>
+          <td><%= new Date(e.time).toLocaleString() %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <p>Auto-refreshes every 60 seconds | Ananya Dua</p>
+  </div>
+
+  <script>
+    // Auto-refresh every 60 seconds
+    setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = `/?${params.toString()}`;
+    }, 60000);
+  </script>
+</body>
+</html>
