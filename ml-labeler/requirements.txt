@@ -2,3 +2,5 @@ transformers
 torch
 flask
 flask-cors
+gunicorn
+gevent

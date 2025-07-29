@@ -6,7 +6,7 @@ import torch
 app = Flask(__name__)
 CORS(app)
 
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli", device=0 if torch.cuda.is_available() else -1)
 
 LABELS = [
     "bug", "frontend", "backend", "docs",
