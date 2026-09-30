@@ -7,14 +7,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    env_file:
+      - .env.docker
     environment:
       - PORT=3000
-      - MONGO_DB_URL=mongodb://mongo:27017/github-bot
-      - ML_SERVICE_URL=http://ml:5000/predict
-      - GITHUB_TOKEN=${GITHUB_TOKEN}  
+      - ML_SERVICE_URL=http://ml:5000/predict  
     depends_on:
       - mongo
-      - ml
     working_dir: /app
     command: ["npm", "run", "start"]
 

@@ -1,7 +1,3 @@
-import axios from 'axios';
-import { applyLabels } from './github';
-import { LabelEvent } from './models/LabelEvent'; 
-
 const labelRules: { [key: string]: string[] } = {
   bug: [
     'error', 'fail', 'bug', 'broken', 'crash', 'issue',
@@ -44,72 +40,19 @@ const labelRules: { [key: string]: string[] } = {
   ]
 };
 
-function getLabelsFromText(text: string): string[] {
+export function getLabelsFromText(text: string): string[] {
   const matched: Set<string> = new Set();
+  const haystack = text.toLowerCase();
   for (const [label, keywords] of Object.entries(labelRules)) {
     for (const keyword of keywords) {
-      if (text.toLowerCase().includes(keyword)) {
+      if (haystack.includes(keyword)) {
         matched.add(label);
       }
     }
   }
   return [...matched];
 }
-async function getMLLabels(text: string): Promise<string[]> {
-  try {
-    const res = await axios.post('http://localhost:5000/predict', { text });
-    return res.data;
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error("ML Labeling Error:", err.message);
-    } else {
-      console.error("ML Labeling Error:", err);
-    }
-    return [];
-  }
-}
 
-export async function handleEvent(payload: any) {
-  const isIssue = payload.issue;
-  const isPR = payload.pull_request;
-
-  console.log('handleEvent called');
-
-  if (payload.action !== 'opened' && payload.action !== 'edited') {
-    console.log('Skipping: action is not opened or edited');
-    return;
-  }
-
-  if (!isIssue && !isPR) {
-    console.log('Skipping: not an issue or PR');
-    return;
-  }
-
-  const title = isIssue ? payload.issue.title : payload.pull_request.title;
-  const body = isIssue ? payload.issue.body : payload.pull_request.body;
-  const fullText = `${title} ${body || ''}`;
-  console.log('Full text:', fullText);
-
-  const labels = await getMLLabels(fullText);
-  if (labels.length === 0) {
-    console.log('No matching labels found.');
-    return;
-  }
-
-  const issueNumber = isIssue ? payload.issue.number : payload.pull_request.number;
-  const repo = payload.repository.name;
-  const owner = payload.repository.owner.login;
-
-  console.log('Applying labels...:', labels);
-  await applyLabels(owner, repo, issueNumber, labels);
-
-  const doc = await LabelEvent.create({
-    type: isIssue ? 'Issue' : 'PR',
-    number: issueNumber,
-    repo,
-    labels,
-    time: new Date(),
-  });
-
-  console.log('Saved event to DB:', doc);
+export function titleAsksForBugAlert(title: string): boolean {
+  return title.toLowerCase().includes('bug');
 }

@@ -1,190 +1,73 @@
-# GitHub Auto-Issue Labeler Bot + Dashboard
+# GitHub automation bot
 
-A GitHub bot that automatically labels **Issues** and **Pull Requests** using a rule-based engine and ML-powered classification. Includes a web dashboard to visualize and filter all contributor activity.
+A signed-in user connects a GitHub repository they administer. GitHub sends `issues` and `pull_request` webhooks to this app. The app checks the webhook signature, stores each delivery once, adds keyword labels on opened or edited issues and pull requests, and posts a Slack message when an opened title contains `bug`. The dashboard is available only after GitHub sign-in and lists those events plus the result of each action.
 
-> Built with TypeScript, Express, MongoDB, and EJS. Supports Dockerized deployments, GitHub Actions for CI/CD, and plug-and-play ML classifiers like BART, DistilBERT, or any HuggingFace-supported model.
+There is no `CLAUDE.md`, `AGENTS.md`, or `.cursorrules` in this repo. See [AI_NOTES.md](AI_NOTES.md).
 
----
+## Local setup
 
-## Motivation
-
-Maintainers waste valuable time triaging unlabeled issues. This project solves that with automated, intelligent labeling, ensuring faster prioritization, contributor clarity, and repo hygiene. It’s fully modular and extendable for any team or workflow.
-
----
-
-## Inspiration
-
-- [`Probot`](https://probot.github.io/)
-- GitHub's built-in auto-labeling (limited)
-
----
-## Features
-
-- Auto-label GitHub Issues & PRs via rule-based NLP or ML inference
-- Real-time GitHub webhook listener for issues and pull_request
-- Dashboard with filters (label/repo), live-refresh, and latest-first sort
-- ML service powered by HuggingFace Transformers (zero-shot)
-- MongoDB persistence for activity logs (LabelEvents)
-- Extensible keyword-label rules per org/project
-- Docker Compose-based local development and deployment
-- Webhook signature verification and .env config support
----
-
-## Architecture
-
-```text
-+------------------+       +-------------------+       +-----------------------+
-|  GitHub Webhook  +------>+  Express Webhook  +------>+  Label Engine         |
-|  Events (PRs)    |       |  Listener (Node)  |       |  (Keyword + ML)       |
-+------------------+       +-------------------+       +----------+------------+
-                                                                    |
-                                                                    v
-                                                      +---------------------------+
-                                                      |  MongoDB (Activity Logs)  |
-                                                      +------------+--------------+
-                                                                   |
-                                                                   v
-                                                      +---------------------------+
-                                                      |     Dashboard (EJS)       |
-                                                      +---------------------------+
-                                                      
-```
-## Tech Stack
-
-| Layer         | Tech Stack                                      |
-|---------------|--------------------------------------------------|
-| **Backend**   | Node.js, Express, TypeScript                    |
-| **Database**  | MongoDB Atlas (via Mongoose)                    |
-| **Frontend**  | EJS, HTML, Vanilla CSS                          |
-| **Webhook**   | GitHub Webhooks (`issues`, `pull_request`)      |
-| **ML**| Python, Huggingface Transformers (BART (facebook/bart-large-mnli)           |
-| **Dev Tools** | ts-node-dev, dotenv, ngrok                      |
-| **Dev Ops** | Docker, Docker Compose, GitHub Actions (CI/CD)    |
-
----
-
-## Getting Started
-
-### 1. Clone the repository
+1. Create a [GitHub OAuth App](https://github.com/settings/developers). Set the authorization callback URL to `http://localhost:3000/auth/github/callback` while you run locally. The app requests the `read:user` and `repo` scopes so it can list repositories you own and create a webhook.
+2. Create a [Slack incoming webhook](https://api.slack.com/messaging/webhooks) in a free workspace.
+3. Copy the example env file and fill it in. Do not commit `.env`.
 
 ```bash
-git clone https://github.com/ananyadua27/GitHub-issue-labeler-bot.git
-cd GitHub-issue-labeler-bot
+cp .env.example .env
 ```
 
-### 2. Configure environment
-Create a .env.docker file in the root:
+On Windows PowerShell: `Copy-Item .env.example .env`
+
+| Variable | Purpose |
+| --- | --- |
+| `GITHUB_CLIENT_ID` | OAuth App client id |
+| `GITHUB_CLIENT_SECRET` | OAuth App client secret |
+| `GITHUB_WEBHOOK_SECRET` | Secret sent to GitHub when the repo webhook is created. The app rejects deliveries that do not match it. Reconnect the repository if you change it. |
+| `SESSION_SECRET` | Signs the login cookie and encrypts the GitHub access token at rest. Sign in again if you change it. |
+| `MONGO_DB_URL` | MongoDB connection string. Atlas free tier, or `mongodb://localhost:27017/github-bot` if you start only the `mongo` service from Docker Compose. |
+| `SLACK_WEBHOOK_URL` | Slack incoming webhook URL. |
+| `APP_BASE_URL` | Public origin with no trailing slash. Use `http://localhost:3000` locally. |
+| `PORT` | HTTP port. Defaults to `3000`. |
+
+4. Install and run:
 
 ```bash
-GITHUB_TOKEN=
-MONGO_DB_URL=
-PORT=3000
+npm install
+npm run dev
 ```
 
-### 3. Run with Docker Compose
-```bash
-docker compose --env-file .env.docker up --build
-```
+Open `http://localhost:3000`, sign in, and choose a repository. GitHub cannot deliver webhooks to localhost. Use the deployed URL below for a real delivery, or point `APP_BASE_URL` at a public HTTPS tunnel and put that same origin in the OAuth callback.
 
-## GitHub Webhook Setup
+`npm run build` then `npm start` runs the compiled server.
 
-1. Go to your repository on GitHub
-2. Navigate to **Settings → Webhooks**
-3. Click **“Add webhook”**
-4. Fill out the webhook form:
-   - **Payload URL**: `https://<your-ngrok-or-deployed-url>/webhook`
-   - **Content type**: `application/json`
-   - **Events**: Choose:
-     - Individual events →  _Issues_ and _Pull Requests_
-5. Click **Add webhook**
+## Deploy
 
-Once configured, the bot will listen for:
-- New issues
-- New pull requests
-- Edits to either
+The app is set up for [Render](https://render.com) free web services (no credit card) via [render.yaml](render.yaml).
 
----
+1. Push this repository to GitHub.
+2. In Render, create a Blueprint from the repo, or a new Web Service with build command `npm install && npm run build` and start command `npm start`.
+3. Set every variable from `.env.example`. Use `NODE_ENV=production`. Set `APP_BASE_URL` to the Render URL, for example `https://github-automation-bot.onrender.com`, with no trailing slash.
+4. In the GitHub OAuth App, set the authorization callback URL to `https://<your-render-host>/auth/github/callback`.
+5. Open the Render URL, sign in, and connect a repository. That registers `https://<your-render-host>/webhook` for `issues` and `pull_request`.
 
-## Dashboard
+The free service sleeps when idle. The first request after sleep can be slow. Events are stored before Slack or the GitHub label call runs, and failed actions are retried up to five times after the process is awake.
 
-> Deployable via Vercel, Railway, or your own Node server.
+The live URL is the Render service URL after the blueprint is applied. Put that URL in this section before you submit. GitHub webhooks and the OAuth callback must use it, not localhost.
 
-### Features:
--  **Auto-refreshing** table (every 60 seconds)
--  **Filter by label** (`bug`, `frontend`, `backend`, `docs`)
--  **Filter by repo name** (e.g., `my-repo`)
--  **Sorted by latest first**
+## How to test
 
-### Demo:
+Use your own GitHub account. There is no shared password.
 
-![Demo](./assets/diagram1.png)
----
+1. Sign in on the deployed site and connect a repository you administer.
+2. Open a new issue titled `bug: demo login fails`.
+3. Confirm GitHub added labels (the title matches the `bug` rule), Slack received `Bug alert: ...`, and the dashboard shows the delivery with a success or failure for each action.
+4. Open a second issue titled `Update the readme` and confirm it is logged. It should not send Slack, because the title does not contain `bug`.
+5. Redeliver the same webhook from GitHub's webhook deliveries page. The dashboard should still show one row for that delivery id.
 
-## Smart Labeling Engine
+Sending a POST to `/webhook` without a valid `X-Hub-Signature-256` returns `401`.
 
-### Rule-Based Matching
+## Behavior
 
-Defined in `labeler.ts` using keyword triggers:
-
-| Label        | Trigger Keywords (Examples)                                     |
-|--------------|-----------------------------------------------------------------|
-| `bug`        | `error`, `fail`, `crash`, `timeout`, `broken`, `issue`         |
-| `frontend`   | `.tsx`, `React`, `CSS`, `UI`, `layout`, `component`, `style`   |
-| `backend`    | `api`, `server`, `auth`, `controller`, `express`, `mongoose`   |
-| `docs`       | `README`, `.md`, `wiki`, `guide`, `documentation`              |
-| `devops`     | `docker`, `CI`, `CD`, `workflow`, `pipeline`, `kubernetes`     |
-| `test`       | `unit test`, `jest`, `cypress`, `mock`, `assert`, `coverage`   |
-| `performance`| `optimize`, `latency`, `slow`, `profiling`, `throughput`       |
-| `security`   | `xss`, `csrf`, `auth`, `token`, `permission`, `injection`      |
-| `refactor`   | `clean`, `rename`, `simplify`, `tidy`, `modularize`            |
-
-> Keywords can be extended easily to customize label logic per repo or team.
-
----
-
-### ML-Based Classification 
-
-Service powered by **BART (facebook/bart-large-mnli)** via Hugging Face Transformers:
-
-- Zero-shot classifier powered by facebook/bart-large-mnli
-- Accepts title + body of Issues/PRs as input
-- Deployed via Flask and called internally at /predict
-
----
-
-## Performance & Scalability
-
-- Non-blocking, async webhook handlers via Express
-- Efficient MongoDB querying with indexed fields
-- ML inference runs asynchronously to avoid blocking webhook thread
-- Horizontally scalable via stateless architecture
-
----
-
-## Security
-
-- GitHub webhook signature verification (HMAC-SHA256) 
-- Environment variables stored securely (`.env`, GitHub secrets)
-- Rate-limiting middleware (planned for production deployment)
-
----
-
-## API Endpoints
-
-| Method | Route           | Description                     |
-|--------|------------------|---------------------------------|
-| `POST` | `/webhook`       | Webhook listener for GitHub     |
-| `POST` | `/predict`       | ML service endpoint for label prediction |
-| `GET`  | `/dashboard`     | Rendered UI with filters        |
-| `GET`  | `/api/activity`  | JSON feed of recent activity    |
-
----
-
-## Future Improvements 
-
-Caching layer + rate-limiting for ML microservice
-
-## License
-
-MIT License © Ananya Dua
-
+- Login is required for the dashboard, connecting a repo, and deleting a log row.
+- Webhook bodies are verified with HMAC SHA-256. The raw request body is what gets signed.
+- `X-GitHub-Delivery` is unique. A repeat delivery does not label or notify again.
+- If Slack or the GitHub API fails, the event stays in MongoDB with a failed action and is retried in the background.
+- GitHub access tokens are encrypted with `SESSION_SECRET` and are not put in the cookie, the page, or logs.

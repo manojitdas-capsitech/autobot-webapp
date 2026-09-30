@@ -1,141 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>GitHub Auto-Issue Labeler (Bot) Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — GitHub automation bot</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 4rem;
-      background-color: #fafafa;
-    }
-    h1 {
-      font-size: 5rem;
-      margin-bottom: 2rem;
-    }
-    form {
-      margin-bottom: 2rem;
-      background-color: #fff;
-      width: 80%;
-      padding: 2rem;
-    }
-    label {
-      margin-right: 2rem;
-      font-size: 3rem;  
-    }
-    input[type="text"], select {
-      padding: 6px;
-      font-size: 3rem;
-      margin-right: 2rem;
-    }
-    button {
-      padding: 10px 22px;
-      font-size: 2.5rem;
-      border-radius: 10px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    table {
-      width: 81.5%;
-      font-size: 3rem;  
-      border-collapse: collapse;
-      background-color: white;
-    }
-    th, td {
-      font-size: 3rem;  
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #f3f3f3;
-      font-size: 3rem;  
-    }
-    tr:nth-child(even) {
-      font-size: 3rem;  
-    }
-    .footer {
-      margin-top: 2rem;
-      font-size: 3rem;
-      color: #6d6d6d;
-    }
-    p {
-      font-size: 3rem;
-    }
+    body { font-family: "Segoe UI", sans-serif; background: #f6f8fa; color: #1f2328; margin: 0; }
+    header, main { max-width: 72rem; margin: 0 auto; padding: 1rem 1.25rem; }
+    header { display: flex; justify-content: space-between; align-items: center; }
+    h1 { font-size: 1.4rem; margin: 0; }
+    .who { display: flex; align-items: center; gap: 0.75rem; }
+    img { width: 32px; height: 32px; border-radius: 50%; }
+    button, select, input { font: inherit; }
+    button { background: #1f2328; color: #fff; border: 0; border-radius: 6px; padding: 0.45rem 0.8rem; cursor: pointer; }
+    button.danger { background: #cf222e; }
+    button.ghost { background: #fff; color: #1f2328; border: 1px solid #d0d7de; }
+    section { background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #d8dee4; vertical-align: top; font-size: 0.92rem; }
+    th { background: #f6f8fa; }
+    .ok { color: #1a7f37; }
+    .error { color: #cf222e; }
+    .muted { color: #656d76; }
+    form.inline { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
   </style>
 </head>
 <body>
-  <h1>GitHub Auto-Issue Labeler (Bot) Dashboard</h1>
+  <header>
+    <h1>Activity log</h1>
+    <div class="who">
+      <% if (user.avatarUrl) { %><img src="<%= user.avatarUrl %>" alt=""><% } %>
+      <span>@<%= user.login %></span>
+      <form method="post" action="/logout"><button class="ghost" type="submit">Log out</button></form>
+    </div>
+  </header>
+  <main>
+    <% if (flash) { %><p class="<%= flash.type %>"><%= flash.message %></p><% } %>
+    <% if (reposError) { %><p class="error">Could not list repositories: <%= reposError %></p><% } %>
+    <% if (webhookWarning) { %>
+      <p class="error">This app URL is not a public HTTPS address. GitHub cannot deliver webhooks to it. Connect the repository from the deployed site.</p>
+    <% } %>
 
-  <form method="get" id="filter-form">
-    <label>
-      Label:
-      <select name="label" id="label-select">
-        <option value="" <%= !label ? 'selected' : '' %>>All</option>
-        <option value="bug" <%= label === 'bug' ? 'selected' : '' %>>bug</option>
-        <option value="frontend" <%= label === 'frontend' ? 'selected' : '' %>>frontend</option>
-        <option value="backend" <%= label === 'backend' ? 'selected' : '' %>>backend</option>
-        <option value="docs" <%= label === 'docs' ? 'selected' : '' %>>docs</option>
-        <option value="devops" <%= label === 'devops' ? 'selected' : '' %>>devops</option>
-        <option value="test" <%= label === 'test' ? 'selected' : '' %>>test</option>
-        <option value="performance" <%= label === 'performance' ? 'selected' : '' %>>performance</option>
-        <option value="security" <%= label === 'security' ? 'selected' : '' %>>security</option>
-        <option value="refactor" <%= label === 'refactor' ? 'selected' : '' %>>refactor</option>
-      </select>
-    </label>
+    <section>
+      <h2>Connected repository</h2>
+      <% if (connected) { %>
+        <p>Listening on <strong><%= connected.fullName %></strong></p>
+        <p class="muted">Webhook target: <%= webhookTarget %></p>
+        <form method="post" action="/repos/disconnect">
+          <button class="danger" type="submit">Disconnect</button>
+        </form>
+      <% } else { %>
+        <p>No repository is connected yet.</p>
+      <% } %>
+      <form class="inline" method="post" action="/repos/connect">
+        <label>
+          Repository
+          <select name="fullName" required>
+            <option value="">Choose a repo you admin</option>
+            <% repos.forEach(function(item) { %>
+              <option value="<%= item.fullName %>" <%= connected && connected.fullName === item.fullName ? 'selected' : '' %>><%= item.fullName %><%= item.private ? ' (private)' : '' %></option>
+            <% }) %>
+          </select>
+        </label>
+        <button type="submit">Connect</button>
+      </form>
+    </section>
 
-    <label>
-      Repo:
-      <input type="text" name="repo" id="repo-input" placeholder="e.g. my-repo"
-        value="<%= typeof repo !== 'undefined' ? repo : '' %>">
-    </label>
-
-    <button type="submit">Apply</button>
-  </form>
-
-  <p><strong>Total Events:</strong> <%= events.length %></p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Type</th>
-        <th>#</th>
-        <th>Labels</th>
-        <th>Repo</th>
-        <th>Time</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-    <% events.forEach(e => { %>
-      <tr>
-        <td><%= e.type %></td>
-        <td>#<%= e.number %></td>
-        <td><%= e.labels.join(', ') %></td>
-        <td><%= e.repo %></td>
-        <td><%= new Date(e.time).toLocaleString() %></td>
-        <td>
-          <form action="/delete/<%= e._id %>" method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
-            <button style="background-color: #dc3545;">Delete</button>
-          </form>
-        </td>
-      </tr>
-    <% }) %>
-  </tbody>
-  </table>
-
-  <div class="footer">
-    <p>Auto-refreshes every 60 seconds | Ananya Dua</p>
-  </div>
-
+    <section>
+      <form class="inline" method="get">
+        <label>
+          Label
+          <select name="label">
+            <option value="" <%= !label ? 'selected' : '' %>>All</option>
+            <% ['bug','frontend','backend','docs','devops','test','performance','security','refactor'].forEach(function(name) { %>
+              <option value="<%= name %>" <%= label === name ? 'selected' : '' %>><%= name %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>
+          Repo
+          <input type="text" name="repo" placeholder="repo name" value="<%= repo || '' %>">
+        </label>
+        <button type="submit">Apply</button>
+      </form>
+      <p><strong>Events:</strong> <%= events.length %></p>
+      <table>
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Event</th>
+            <th>Repo</th>
+            <th>Title</th>
+            <th>Bot actions</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% events.forEach(function(event) { %>
+            <tr>
+              <td><%= new Date(event.receivedAt).toLocaleString() %></td>
+              <td><%= event.eventType %> <%= event.githubAction %> #<%= event.number %></td>
+              <td><%= event.fullName %></td>
+              <td><%= event.title %></td>
+              <td>
+                <% (event.actions || []).forEach(function(action) { %>
+                  <div class="<%= action.status === 'failed' ? 'error' : '' %>">
+                    <%= action.kind === 'github_label' ? 'GitHub label' : 'Slack' %>:
+                    <%= action.status %><% if (action.detail) { %> — <%= action.detail %><% } %>
+                    <span class="muted">(<%= action.attempts %>/5)</span>
+                  </div>
+                <% }) %>
+              </td>
+              <td>
+                <form method="post" action="/events/<%= event._id %>/delete" onsubmit="return confirm('Delete this log entry?');">
+                  <button class="danger" type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
   <script>
-    // Auto-refresh every 60 seconds
-    setTimeout(() => {
-      const params = new URLSearchParams(window.location.search);
-      window.location.href = `/?${params.toString()}`;
+    setTimeout(function () {
+      window.location.href = '/?' + new URLSearchParams(window.location.search).toString();
     }, 60000);
   </script>
 </body>

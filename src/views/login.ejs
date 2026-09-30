@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in — GitHub automation bot</title>
+  <style>
+    body { font-family: "Segoe UI", sans-serif; background: #f6f8fa; color: #1f2328; margin: 0; }
+    main { max-width: 32rem; margin: 4rem auto; background: #fff; padding: 2rem; border: 1px solid #d0d7de; border-radius: 8px; }
+    h1 { font-size: 1.5rem; margin-top: 0; }
+    p { line-height: 1.5; }
+    a.button { display: inline-block; background: #1f2328; color: #fff; text-decoration: none; padding: 0.6rem 1rem; border-radius: 6px; }
+    .error { color: #cf222e; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>GitHub automation bot</h1>
+    <p>Sign in with GitHub to connect a repository you own. The bot labels new issues and pull requests, alerts Slack when a title contains “bug”, and keeps a log of what it did.</p>
+    <% if (error) { %><p class="error"><%= error %></p><% } %>
+    <% if (!oauthReady) { %>
+      <p class="error">Set GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET before signing in.</p>
+    <% } else { %>
+      <a class="button" href="/auth/github">Sign in with GitHub</a>
+    <% } %>
+  </main>
+</body>
+</html>
